@@ -6,6 +6,6 @@ services:
     startCommand: gunicorn render_start:app
     envVars:
       - key: PYTHON_VERSION
-        value: 3.13.4
+        value: 3.12.6
     healthCheckPath: /
     autoDeploy: true
