@@ -436,6 +436,7 @@ def download_report():
                 mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
                 as_attachment=True,
                 download_name=filename
+            )
 
         else:
             # Альтернативный способ без pandas - CSV
