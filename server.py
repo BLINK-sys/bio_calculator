@@ -3,10 +3,18 @@ import requests
 import json
 from datetime import datetime, date
 from io import BytesIO
-import pandas as pd
 import sqlite3
 import os
 import importlib
+import csv
+
+# Попытка импорта pandas, если не удается - используем CSV
+try:
+    import pandas as pd
+    PANDAS_AVAILABLE = True
+except ImportError:
+    PANDAS_AVAILABLE = False
+    print("⚠️ pandas недоступен, отчеты будут в формате CSV")
 
 app = Flask(__name__)
 
@@ -365,9 +373,6 @@ def download_report():
                 'error': 'Необходимо указать начальную и конечную дату'
             }), 400
         
-        # Подключаемся к базе данных
-        conn = sqlite3.connect('calculations.db')
-        
         # Получаем данные за выбранный период
         query = '''
             SELECT product_name, final_price, calculation_date
@@ -376,57 +381,111 @@ def download_report():
             ORDER BY calculation_date DESC
         '''
         
-        df = pd.read_sql_query(query, conn, params=[start_date, end_date])
-        conn.close()
+        if PANDAS_AVAILABLE:
+            # Подключаемся к базе данных для pandas
+            conn = sqlite3.connect('calculations.db')
+            df = pd.read_sql_query(query, conn, params=[start_date, end_date])
+            conn.close()
+
         
-        if df.empty:
-            return jsonify({
-                'error': 'За выбранный период данных не найдено'
-            }), 404
-        
-        # Переименовываем колонки для красивого отображения
-        df.columns = ['Наименование товара', 'Финальная цена (KZT)', 'Дата расчета']
-        
-        # Форматируем дату
-        df['Дата расчета'] = pd.to_datetime(df['Дата расчета']).dt.strftime('%d.%m.%Y %H:%M')
-        
-        # Форматируем цену
-        df['Финальная цена (KZT)'] = df['Финальная цена (KZT)'].round(2)
-        
-        # Создаем Excel файл в памяти
-        output = BytesIO()
-        with pd.ExcelWriter(output, engine='openpyxl') as writer:
-            df.to_excel(writer, sheet_name='Отчет по расчетам', index=False)
+        if PANDAS_AVAILABLE:
+            if df.empty:
+                return jsonify({
+                    'error': 'За выбранный период данных не найдено'
+                }), 404
             
-            # Получаем рабочий лист для форматирования
-            worksheet = writer.sheets['Отчет по расчетам']
+            # Переименовываем колонки для красивого отображения
+            df.columns = ['Наименование товара', 'Финальная цена (KZT)', 'Дата расчета']
             
-            # Автоматически подгоняем ширину колонок
-            for column in worksheet.columns:
-                max_length = 0
-                column_letter = column[0].column_letter
-                for cell in column:
-                    try:
-                        if len(str(cell.value)) > max_length:
-                            max_length = len(str(cell.value))
-                    except:
-                        pass
-                adjusted_width = min(max_length + 2, 50)
-                worksheet.column_dimensions[column_letter].width = adjusted_width
-        
-        output.seek(0)
-        
-        # Формируем имя файла с датами
-        start_date_formatted = start_date.replace('-', '.')
-        end_date_formatted = end_date.replace('-', '.')
-        filename = f'Отчет_расчетов_{start_date_formatted}-{end_date_formatted}.xlsx'
-        
-        return send_file(
-            output,
-            mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            as_attachment=True,
-            download_name=filename
-        )
+            # Форматируем дату
+            df['Дата расчета'] = pd.to_datetime(df['Дата расчета']).dt.strftime('%d.%m.%Y %H:%M')
+            
+            # Форматируем цену
+            df['Финальная цена (KZT)'] = df['Финальная цена (KZT)'].round(2)
+            
+            # Создаем Excel файл в памяти
+            output = BytesIO()
+            with pd.ExcelWriter(output, engine='openpyxl') as writer:
+                df.to_excel(writer, sheet_name='Отчет по расчетам', index=False)
+                
+                # Получаем рабочий лист для форматирования
+                worksheet = writer.sheets['Отчет по расчетам']
+                
+                # Автоматически подгоняем ширину колонок
+                for column in worksheet.columns:
+                    max_length = 0
+                    column_letter = column[0].column_letter
+                    for cell in column:
+                        try:
+                            if len(str(cell.value)) > max_length:
+                                max_length = len(str(cell.value))
+                        except:
+                            pass
+                    adjusted_width = min(max_length + 2, 50)
+                    worksheet.column_dimensions[column_letter].width = adjusted_width
+            
+            output.seek(0)
+            
+            # Формируем имя файла с датами
+            start_date_formatted = start_date.replace('-', '.')
+            end_date_formatted = end_date.replace('-', '.')
+            filename = f'Отчет_расчетов_{start_date_formatted}-{end_date_formatted}.xlsx'
+            
+            return send_file(
+                output,
+                mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                as_attachment=True,
+                download_name=filename
+
+        else:
+            # Альтернативный способ без pandas - CSV
+            cursor = conn.cursor()
+            cursor.execute(query, [start_date, end_date])
+            rows = cursor.fetchall()
+            conn.close()
+            
+            if not rows:
+                return jsonify({
+                    'error': 'За выбранный период данных не найдено'
+                }), 404
+            
+            # Создаем CSV файл в памяти
+            output = BytesIO()
+            writer = csv.writer(output)
+            
+            # Записываем заголовки
+            writer.writerow(['Наименование товара', 'Финальная цена (KZT)', 'Дата расчета'])
+            
+            # Записываем данные
+            for row in rows:
+                # Форматируем дату
+                try:
+                    date_obj = datetime.fromisoformat(row[2].replace('Z', '+00:00'))
+                    formatted_date = date_obj.strftime('%d.%m.%Y %H:%M')
+                except:
+                    formatted_date = row[2]
+                
+                # Форматируем цену
+                try:
+                    formatted_price = round(float(row[1]), 2)
+                except:
+                    formatted_price = row[1]
+                
+                writer.writerow([row[0], formatted_price, formatted_date])
+            
+            output.seek(0)
+            
+            # Формируем имя файла с датами
+            start_date_formatted = start_date.replace('-', '.')
+            end_date_formatted = end_date.replace('-', '.')
+            filename = f'Отчет_расчетов_{start_date_formatted}-{end_date_formatted}.csv'
+            
+            return send_file(
+                output,
+                mimetype='text/csv',
+                as_attachment=True,
+                download_name=filename
+            )
         
     except Exception as e:
         return jsonify({
