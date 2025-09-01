@@ -5,6 +5,7 @@
 import os
 from server import app
 
+# Для gunicorn
 if __name__ == '__main__':
     # Получаем порт из переменной окружения Render или используем 5000 по умолчанию
     port = int(os.environ.get('PORT', 5000))
