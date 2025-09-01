@@ -338,44 +338,7 @@
             box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.1);
         }
 
-        .warehouse-row {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 8px;
-        }
 
-        .warehouse-inputs {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .warehouse-input {
-            flex: 1;
-        }
-
-        .warehouse-input label {
-            display: block;
-            margin-bottom: 4px;
-            font-weight: 600;
-            color: #495057;
-            font-size: 0.8em;
-        }
-
-        .warehouse-input input {
-            width: 100%;
-            padding: 6px;
-            border: 1px solid #e9ecef;
-            border-radius: 4px;
-            font-size: 12px;
-        }
-
-        .warehouse-input input:focus {
-            outline: none;
-            border-color: #2196f3;
-            box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.1);
-        }
 
         .report-section {
             background: white;
@@ -598,19 +561,7 @@
                 grid-template-columns: 1fr;
             }
             
-            .warehouse-row {
-                flex-direction: column;
-                align-items: stretch;
-            }
-            
-            .warehouse-inputs {
-                flex-direction: column;
-                gap: 10px;
-            }
-            
-            .warehouse-input {
-                width: 100%;
-            }
+
             
             .report-form {
                 flex-direction: column;
@@ -706,21 +657,19 @@
                                     <input type="number" id="pickup30" value="10000" step="100" min="0">
                                     <small style="color: #666; font-size: 0.8em;">Услуга забора</small>
                                 </div>
-                                <div class="compact-form-group warehouse-row">
-                                    <div class="warehouse-inputs">
-                                        <div class="warehouse-input">
-                                            <label for="warehouseCount">Количество (км)</label>
-                                            <input type="number" id="warehouseCount" value="26" step="1" min="1">
-                                        </div>
-                                        <div class="warehouse-input">
-                                            <label for="warehouseRate">Тариф за единицу (стоимость за км)</label>
-                                            <input type="number" id="warehouseRate" value="400" step="10" min="1">
-                                        </div>
-                                        <div class="warehouse-input">
-                                            <label>Складские услуги (итого)</label>
-                                            <input type="text" id="warehouseTotal" value="10400" readonly style="background-color: #f8f9fa;">
-                                        </div>
-                                    </div>
+                                <div class="compact-form-group">
+                                    <label for="warehouseCount">Количество (км)</label>
+                                    <input type="number" id="warehouseCount" value="26" step="1" min="1">
+                                    <small style="color: #666; font-size: 0.8em;">Количество единиц для складских услуг</small>
+                                </div>
+                                <div class="compact-form-group">
+                                    <label for="warehouseRate">Тариф за единицу (стоимость за км)</label>
+                                    <input type="number" id="warehouseRate" value="400" step="10" min="1">
+                                    <small style="color: #666; font-size: 0.8em;">Стоимость за единицу складских услуг</small>
+                                </div>
+                                <div class="compact-form-group" style="opacity: 0.7;">
+                                    <label>Складские услуги (итого)</label>
+                                    <input type="text" id="warehouseTotal" value="10400" readonly style="background-color: #f8f9fa;">
                                     <small style="color: #666; font-size: 0.8em;">26 × 400 = 10400 (рассчитывается автоматически)</small>
                                 </div>
                                 <div class="compact-form-group">
