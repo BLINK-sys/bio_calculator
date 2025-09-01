@@ -162,7 +162,7 @@ def save_calculation_to_db(product_name, final_price):
     Только: наименование товара, финальная цена, дата расчета
     """
     try:
-        conn = sqlite3.connect('calculations.db')
+        conn = sqlite3.connect('/var/data/calculations.db')
         cursor = conn.cursor()
         
         # Создаем таблицу если её нет
@@ -327,7 +327,7 @@ def update_formula_params():
 def get_calculation_history():
     """API для получения истории расчетов из базы данных"""
     try:
-        conn = sqlite3.connect('calculations.db')
+        conn = sqlite3.connect('/var/data/calculations.db')
         cursor = conn.cursor()
         
         # Получаем последние 50 расчетов, отсортированных по дате
@@ -383,7 +383,7 @@ def download_report():
         
         if PANDAS_AVAILABLE:
             # Подключаемся к базе данных для pandas
-            conn = sqlite3.connect('calculations.db')
+            conn = sqlite3.connect('/var/data/calculations.db')
             df = pd.read_sql_query(query, conn, params=[start_date, end_date])
             conn.close()
 
@@ -440,6 +440,7 @@ def download_report():
 
         else:
             # Альтернативный способ без pandas - CSV
+            conn = sqlite3.connect('/var/data/calculations.db')
             cursor = conn.cursor()
             cursor.execute(query, [start_date, end_date])
             rows = cursor.fetchall()

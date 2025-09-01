@@ -80,7 +80,7 @@ bio_calculator/
 ├── render.yaml           # Конфигурация Render
 ├── Procfile              # Конфигурация для Render
 ├── index.html            # Веб-интерфейс
-├── calculations.db       # База данных SQLite3
+├── /var/data/calculations.db  # База данных SQLite3 (на Render)
 └── README.md             # Документация
 ```
 
