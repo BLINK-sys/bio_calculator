@@ -1,1 +1,1 @@
-exchange_rates = {'USD': 543.93, 'EUR': 634.59, 'RUB': 6.77}
+exchange_rates = {'USD': 547.1, 'EUR': 642.62, 'RUB': 6.54}

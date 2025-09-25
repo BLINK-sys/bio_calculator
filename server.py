@@ -21,6 +21,7 @@ app = Flask(__name__)
 # Импортируем модули для работы с курсами валют
 import valute
 import info
+import valute_bio
 
 # Параметры формулы по умолчанию
 DEFAULT_FORMULA_PARAMS = {
@@ -56,6 +57,21 @@ def update_exchange_rates():
     except Exception as e:
         print(f"Ошибка обновления курсов валют: {e}")
         return info.exchange_rates
+
+def update_bio_exchange_rates():
+    """
+    Обновляет курсы валют BIO и конвертирует их в тенге
+    """
+    try:
+        # Получаем BIO курсы в тенге
+        bio_rates_tenge = valute_bio.get_bio_rates_in_tenge()
+        
+        print(f"BIO курсы в тенге обновлены: {bio_rates_tenge}")
+        return bio_rates_tenge
+    except Exception as e:
+        print(f"Ошибка обновления BIO курсов: {e}")
+        # Возвращаем значения по умолчанию
+        return {'USD': 93.0, 'EUR': 109.0}
 
 def calculate_delivery_cost(weight_kg, volume_m3, params):
     """
@@ -210,6 +226,23 @@ def get_exchange_rates():
             'error': f'Ошибка получения курсов валют: {str(e)}'
         }), 500
 
+@app.route('/api/bio-exchange-rates')
+def get_bio_exchange_rates():
+    """API для получения курсов валют BIO в тенге"""
+    try:
+        # Обновляем BIO курсы валют при каждом запросе
+        bio_rates = update_bio_exchange_rates()
+        
+        return jsonify({
+            'rates': bio_rates,
+            'source': 'BIO (конвертировано из рублей в тенге)',
+            'timestamp': datetime.now().isoformat()
+        })
+    except Exception as e:
+        return jsonify({
+            'error': f'Ошибка получения BIO курсов валют: {str(e)}'
+        }), 500
+
 @app.route('/api/formula-params')
 def get_formula_params():
     """API для получения параметров формулы по умолчанию"""
@@ -264,7 +297,18 @@ def calculate_price():
         multiplier = formula_params.get('multiplier', 1.12)
         nds = formula_params.get('nds', 1.18)
         
-        converted_price = original_price / divider * exchange_rate * multiplier
+        # Двухэтапная конвертация для BIO товаров (EUR/USD → RUB → KZT)
+        if currency in ['EUR', 'USD']:
+            # Этап 1: Получаем BIO курсы (в тенге, уже конвертированные)
+            bio_rates = update_bio_exchange_rates()
+            bio_rate = bio_rates.get(currency, exchange_rate)
+            
+            # Этап 2: Используем BIO курс для конвертации
+            converted_price = original_price / divider * bio_rate * multiplier
+            print(f"🔄 Двухэтапная конвертация {currency}: {original_price} → {bio_rate} тенге")
+        else:
+            # Обычная конвертация для других валют
+            converted_price = original_price / divider * exchange_rate * multiplier
         price_with_delivery = converted_price + delivery_cost
         final_price = price_with_delivery * nds
         
@@ -278,11 +322,16 @@ def calculate_price():
             final_price=final_price
         )
         
+        # Определяем, какой курс использовался
+        used_rate = bio_rate if currency in ['EUR', 'USD'] else exchange_rate
+        rate_source = "BIO (двухэтапная конвертация)" if currency in ['EUR', 'USD'] else "МИГ.кз (прямая конвертация)"
+        
         return jsonify({
             'productName': product_name,
             'originalPrice': original_price,
             'currency': currency,
-            'exchangeRate': exchange_rate,
+            'exchangeRate': used_rate,
+            'rateSource': rate_source,
             'convertedPrice': round(converted_price, 2),
             'volume': round(volume, 4),
             'deliveryWeight': round(delivery_weight, 2),
@@ -291,7 +340,7 @@ def calculate_price():
             'finalPrice': round(final_price, 2),
             'formulaParams': formula_params,
             'calculationSteps': {
-                'step1': f'Конвертация: {original_price} / {divider} × {exchange_rate} × {multiplier} = {converted_price:.2f}',
+                'step1': f'Конвертация: {original_price} / {divider} × {used_rate} × {multiplier} = {converted_price:.2f}',
                 'step2': f'Добавление доставки: {converted_price:.2f} + {delivery_cost:.2f} = {price_with_delivery:.2f}',
                 'step3': f'НДС: {price_with_delivery:.2f} × {nds} = {final_price:.2f}'
             }
@@ -497,7 +546,8 @@ def download_report():
 if __name__ == '__main__':
     print("🚀 Запуск сервера калькулятора стоимости товара...")
     print("📊 Доступные API endpoints:")
-    print("   - GET  /api/exchange-rates - получение курсов валют (автообновление)")
+    print("   - GET  /api/exchange-rates - получение курсов валют МИГ.кз (автообновление)")
+    print("   - GET  /api/bio-exchange-rates - получение курсов валют BIO в тенге (автообновление)")
     print("   - GET  /api/formula-params - получение параметров формулы")
     print("   - POST /api/calculate-price - расчет стоимости товара (с сохранением в БД)")
     print("   - GET  /api/calculation-history - история расчетов")
