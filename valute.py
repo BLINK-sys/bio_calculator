@@ -1,6 +1,8 @@
 import requests
+import importlib
 
 import info
+import bio_rates_tenge
 
 
 def valute():
@@ -49,6 +51,18 @@ def valute():
     # Обновляем только RUB, сохраняя остальные валюты
     exchange_rates_nb = existing_rates.copy()
     exchange_rates_nb["RUB"] = rate_value
+    
+    # Добавляем курсы USD и EUR из bio_rates_tenge.py
+    try:
+        importlib.reload(bio_rates_tenge)
+        if hasattr(bio_rates_tenge, 'bio_rates_tenge'):
+            bio_rates = bio_rates_tenge.bio_rates_tenge
+            if 'USD' in bio_rates:
+                exchange_rates_nb["USD"] = bio_rates["USD"]
+            if 'EUR' in bio_rates:
+                exchange_rates_nb["EUR"] = bio_rates["EUR"]
+    except Exception as e:
+        print(f"Предупреждение: не удалось загрузить курсы из bio_rates_tenge.py: {e}")
 
     print(exchange_rates_nb)
 
@@ -56,7 +70,10 @@ def valute():
     with open("info.py", "w", encoding="utf-8") as file:
         file.write(f"exchange_rates = {exchange_rates_nb}\n")
 
-    print("Курс RUB Halyk Bank (продажа для бизнеса) сохранен в info.py")
+    # Перезагружаем модуль info для получения обновленных курсов
+    importlib.reload(info)
+    
+    print("Курсы валют сохранены в info.py (RUB из Halyk Bank, USD/EUR из bio_rates_tenge.py)")
     exchange_rates = info.exchange_rates
     return exchange_rates
 
