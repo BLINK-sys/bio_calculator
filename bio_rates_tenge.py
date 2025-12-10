@@ -1,1 +1,1 @@
-bio_rates_tenge = {'EUR': 712.86, 'USD': 608.22}
+bio_rates_tenge = {'EUR': 783.71, 'USD': 668.67}
