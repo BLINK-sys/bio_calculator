@@ -26,8 +26,8 @@ import valute_bio
 # Параметры формулы по умолчанию
 DEFAULT_FORMULA_PARAMS = {
     'divider': 1.2,
-    'multiplier': 1.12,
-    'nds': 1.18,
+    'multiplier': 1.16,
+    'nds': 1.16,
     'base30': 7500,           # Базовая ставка (фиксированная)
     'rate30': 179,            # Тариф город+город за кг свыше 30
     'pickup30': 10000,        # Забор со склада БИО
@@ -294,8 +294,8 @@ def calculate_price():
         
         # Применение настраиваемой формулы: (X/divider * курс * multiplier + доставка) * nds
         divider = formula_params.get('divider', 1.2)
-        multiplier = formula_params.get('multiplier', 1.12)
-        nds = formula_params.get('nds', 1.18)
+        multiplier = formula_params.get('multiplier', 1.16)
+        nds = formula_params.get('nds', 1.16)
         
         # Двухэтапная конвертация для BIO товаров (EUR/USD → RUB → KZT)
         if currency in ['EUR', 'USD']:
