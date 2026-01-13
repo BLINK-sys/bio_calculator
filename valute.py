@@ -22,12 +22,17 @@ def valute():
         raise ValueError("Неверный формат ответа от API.")
 
     # Получаем данные для бизнеса (legalPersons)
-    currency_history = data["data"].get("currencyHistory", [])
+    currency_history = data["data"].get("currencyHistory", {})
     if not currency_history:
         raise ValueError("Не найдены данные о курсах валют.")
 
-    # Берем последние актуальные данные
-    latest_data = currency_history[0]
+    # Берем последние актуальные данные (первый элемент словаря)
+    # currencyHistory это словарь вида {"1": {...}, "2": {...}}
+    latest_key = sorted(currency_history.keys(), key=lambda x: int(x))[-1] if currency_history else None
+    if not latest_key:
+        raise ValueError("Не найдены данные о курсах валют.")
+    
+    latest_data = currency_history[latest_key]
     legal_persons = latest_data.get("legalPersons", {})
     
     # Сохраняем существующие курсы из info.py (если есть USD и EUR)

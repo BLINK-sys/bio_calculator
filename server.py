@@ -1,3 +1,9 @@
+import sys
+import io
+# Настройка кодировки для Windows консоли
+if sys.platform == 'win32':
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+
 from flask import Flask, request, jsonify, send_from_directory, send_file
 import requests
 import json
