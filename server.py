@@ -31,7 +31,7 @@ import valute_bio
 
 # Параметры формулы по умолчанию
 DEFAULT_FORMULA_PARAMS = {
-    'divider': 1.2,
+    'divider': 1.22,
     'multiplier': 1.16,
     'nds': 1.16,
     'base30': 7500,           # Базовая ставка (фиксированная)
@@ -299,7 +299,7 @@ def calculate_price():
         exchange_rate = current_rates.get(currency, 1)
         
         # Применение настраиваемой формулы: (X/divider * курс * multiplier + доставка) * nds
-        divider = formula_params.get('divider', 1.2)
+        divider = formula_params.get('divider', 1.22)
         multiplier = formula_params.get('multiplier', 1.16)
         nds = formula_params.get('nds', 1.16)
         
