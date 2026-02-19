@@ -34,14 +34,14 @@ DEFAULT_FORMULA_PARAMS = {
     'divider': 1.22,
     'multiplier': 1.16,
     'nds': 1.16,
-    'base30': 7500,           # Базовая ставка (фиксированная)
-    'rate30': 179,            # Тариф город+город за кг свыше 30
-    'pickup30': 10000,        # Забор со склада БИО
-    'pickupRate30': 20,       # Тариф забора за кг свыше 30
+    'base30': 9000,           # Базовая ставка (фиксированная)
+    'rate30': 215,            # Тариф город+город за кг свыше 30
+    'pickup30': 12000,        # Забор со склада БИО
+    'pickupRate30': 27,       # Тариф забора за кг свыше 30
     'warehouseCount': 26,     # Количество единиц для складских услуг
-    'warehouseRate': 400,     # Тариф за единицу складских услуг
-    'deliveryCity30': 4000,   # Доставка по Астане
-    'cityRate30': 15,         # Тариф доставки по Астане за кг свыше 30
+    'warehouseRate': 450,     # Тариф за единицу складских услуг
+    'deliveryCity30': 5000,   # Доставка по Астане
+    'cityRate30': 19,         # Тариф доставки по Астане за кг свыше 30
     'rate300': 164,           # Тариф город+город 300-1000 кг
     'rate1000': 143,          # Тариф город+город свыше 1000 кг
     'volumetricFactor': 200   # Коэффициент объемного веса (логисты БИО)
@@ -91,12 +91,11 @@ def calculate_delivery_cost(weight_kg, volume_m3, params):
     delivery_weight = max(weight_kg, volumetric_weight)
     
     if delivery_weight <= 30:
-        # До 30 кг: 7500 + 10000 + (26*400) + 4000 = 31,900 тг
-        # В оригинале: return 31900
-        return params.get('delivery30', 31900)
+        # До 30 кг: 9000 + 12000 + (26*450) + 5000 = 37,700 тг
+        return params.get('delivery30', 37700)
         
     elif delivery_weight <= 300:
-        # 30-300 кг: 7500 + (вес-30)*179 + 10000 + (вес-30)*20 + 26*400 + 4000 + (вес-30)*15
+        # 30-300 кг: 9000 + (вес-30)*215 + 12000 + (вес-30)*27 + 26*450 + 5000 + (вес-30)*19
         excess_weight = delivery_weight - 30
         warehouse_total = params.get('warehouseCount', 26) * params.get('warehouseRate', 400)
         return (params.get('base30', 7500) + 
